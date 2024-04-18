@@ -26,7 +26,13 @@ import java.io.IOException;
 public class DataSet
 {
     @Param({
-            "canterbury/alice29.txt",
+            "logpai2k/Hadoop_2k.log",
+            "logpai2k/HDFS_2k.log",
+            "logpai2k/Spark_2k.log",
+            "logpai2k/Zookeeper_2k.log",
+            "logpai2k/Linux_2k.log",
+            //"canterbury/alice29.txt",
+            /*
             "canterbury/asyoulik.txt",
             "canterbury/cp.html",
             "canterbury/fields.c",
@@ -86,6 +92,7 @@ public class DataSet
             "kppkn.gtb",
             "mapreduce-osdi-1.pdf",
             "urls.10K",
+             */
     })
     private String name;
     private byte[] uncompressed;

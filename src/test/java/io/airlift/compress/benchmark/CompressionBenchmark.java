@@ -41,9 +41,9 @@ import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Measurement(iterations = 10)
-@Warmup(iterations = 5)
-@Fork(3)
+@Measurement(iterations = 5)
+@Warmup(iterations = 3)
+@Fork(1)
 public class CompressionBenchmark
 {
     private Compressor compressor;
@@ -56,11 +56,14 @@ public class CompressionBenchmark
     private byte[] uncompressTarget;
 
     @Param({
-            "airlift_lz4",
-            "airlift_lzo",
-            "airlift_snappy",
+//            "lz4_java",
+//            "airlift_lz4",
+            "zstd_jni",
             "airlift_zstd",
-
+//            "airlift_lzo",
+//            "airlift_snappy",
+//            "airlift_zstd",
+            /*
             "iq80_snappy",
             "xerial_snappy",
             "jpountz_lz4_jni",
@@ -78,6 +81,7 @@ public class CompressionBenchmark
             "hadoop_snappy_stream",
             "java_zip_stream",
             "hadoop_gzip_stream",
+             */
     })
     private Algorithm algorithm;
 
@@ -136,13 +140,17 @@ public class CompressionBenchmark
 
             count++;
             sum += 1 / stats.getMean();
-
-            int compressSize = compressSize(algorithm, name);
-            System.out.printf("  %-10s  %-22s  %-25s  %,11d  %10s ± %11s (%5.2f%%) (N = %d, \u03B1 = 99.9%%)\n",
+            var compressResult = compressSize(algorithm, name);
+            int compressSize = compressResult.getCompressSize();
+            int uncompressSize = compressResult.getUncompressedSize();
+            double compressRatio = uncompressSize * 1.0 / compressSize;
+            System.out.printf("  %-10s  %-22s  %-25s  %,11d %,11d %5.2f %10s ± %11s (%5.2f%%) (N = %d, \u03B1 = 99.9%%)\n",
                     result.getPrimaryResult().getLabel(),
                     algorithm,
                     name,
+                    uncompressSize,
                     compressSize,
+                    compressRatio,
                     Util.toHumanReadableSpeed((long) stats.getMean()),
                     Util.toHumanReadableSpeed((long) stats.getMeanErrorAt(0.999)),
                     stats.getMeanErrorAt(0.999) * 100 / stats.getMean(),
@@ -153,7 +161,7 @@ public class CompressionBenchmark
         System.out.println();
     }
 
-    private static int compressSize(String algorithmName, String name)
+    private static compressResult compressSize(String algorithmName, String name)
     {
         try {
             Compressor compressor = Algorithm.valueOf(algorithmName).getCompressor();
@@ -161,10 +169,32 @@ public class CompressionBenchmark
             dataSet.loadFile();
             byte[] uncompressed = dataSet.getUncompressed();
             byte[] compressed = new byte[compressor.maxCompressedLength(uncompressed.length)];
-            return compressor.compress(uncompressed, 0, uncompressed.length, compressed, 0, compressed.length);
+            int size = compressor.compress(uncompressed, 0, uncompressed.length, compressed, 0, compressed.length);
+            return new compressResult(uncompressed.length, size);
+        } catch (Exception e) {
+            return new compressResult(-1, -1);
         }
-        catch (Exception e) {
-            return -1;
+    }
+
+    public static class compressResult
+    {
+        public int uncompressedSize;
+        public int compressSize;
+
+        public compressResult(int uncompressedSize, int compressSize)
+        {
+            this.uncompressedSize = uncompressedSize;
+            this.compressSize = compressSize;
+        }
+
+        public int getUncompressedSize()
+        {
+            return uncompressedSize;
+        }
+
+        public int getCompressSize()
+        {
+            return compressSize;
         }
     }
 }

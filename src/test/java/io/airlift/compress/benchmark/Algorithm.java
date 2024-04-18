@@ -20,6 +20,8 @@ import io.airlift.compress.HadoopCodecDecompressor;
 import io.airlift.compress.lz4.Lz4Codec;
 import io.airlift.compress.lz4.Lz4Compressor;
 import io.airlift.compress.lz4.Lz4Decompressor;
+import io.airlift.compress.lz4java.Lz4javaCompressor;
+import io.airlift.compress.lz4java.Lz4javaDecompressor;
 import io.airlift.compress.lzo.LzoCodec;
 import io.airlift.compress.lzo.LzoCompressor;
 import io.airlift.compress.lzo.LzoDecompressor;
@@ -47,6 +49,9 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 
 public enum Algorithm
 {
+
+    lz4_java(new Lz4javaDecompressor(), new Lz4javaCompressor()),
+
     airlift_lz4(new Lz4Decompressor(), new Lz4Compressor()),
     airlift_snappy(new SnappyDecompressor(), new SnappyCompressor()),
     airlift_lzo(new LzoDecompressor(), new LzoCompressor()),
